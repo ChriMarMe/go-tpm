@@ -843,7 +843,7 @@ func ReadEKCert(rw io.ReadWriter, ownAuth digest) ([]byte, error) {
 		CertSize uint16
 	}
 
-	data, err := NVReadValue(rw, certIndex, offset, uint32(binary.Size(header)), []byte(ownAuth[:]))
+	data, err := NVReadValue(rw, certIndex, offset, uint32(binary.Size(header)), etOwner, khOwner, []byte(ownAuth[:]))
 	if err != nil {
 		return nil, err
 	}
@@ -862,7 +862,7 @@ func ReadEKCert(rw io.ReadWriter, ownAuth digest) ([]byte, error) {
 	switch header.CertType {
 	case tcgFullCert:
 		var tag uint16
-		data, err := NVReadValue(rw, certIndex, offset, uint32(binary.Size(tag)), []byte(ownAuth[:]))
+		data, err := NVReadValue(rw, certIndex, offset, uint32(binary.Size(tag)), etOwner, khOwner, []byte(ownAuth[:]))
 		if err != nil {
 			return nil, err
 		}
@@ -892,7 +892,7 @@ func ReadEKCert(rw io.ReadWriter, ownAuth digest) ([]byte, error) {
 		if length > 128 {
 			length = 128
 		}
-		data, err = NVReadValue(rw, certIndex, offset, length, []byte(ownAuth[:]))
+		data, err = NVReadValue(rw, certIndex, offset, length, etOwner, khOwner, []byte(ownAuth[:]))
 		if err != nil {
 			return nil, err
 		}
@@ -950,15 +950,15 @@ func NVDefineSpace(rw io.ReadWriter, nvData NVDataPublic, ownAuth []byte) error 
 // If TPM isn't locked, no authentification is needed.
 // This is for platform suppliers only.
 // See TPM-Main-Part-3-Commands-20.4
-func NVReadValue(rw io.ReadWriter, index, offset, len uint32, ownAuth []byte) ([]byte, error) {
-	if ownAuth == nil {
+func NVReadValue(rw io.ReadWriter, index, offset, len uint32, entityType uint16, entityValue tpmutil.Handle, auth []byte) ([]byte, error) {
+	if auth == nil {
 		data, _, _, err := nvReadValue(rw, index, offset, len, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read from NVRAM: %v", err)
 		}
 		return data, nil
 	}
-	sharedSecretOwn, osaprOwn, err := newOSAPSession(rw, etOwner, khOwner, ownAuth[:])
+	sharedSecretOwn, osaprOwn, err := newOSAPSession(rw, entityType, entityValue, auth[:])
 	if err != nil {
 		return nil, fmt.Errorf("failed to start new auth session: %v", err)
 	}

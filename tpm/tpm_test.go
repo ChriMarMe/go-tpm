@@ -651,7 +651,7 @@ func TestNVWriteValue(t *testing.T) {
 		t.Fatalf("Couldn't retrieve index information: %v", err)
 	}
 
-	indexValue, err := NVReadValue(rwc, rndIndex, 0, rndIndexInfo.Size, nil)
+	indexValue, err := NVReadValue(rwc, rndIndex, 0, rndIndexInfo.Size, etOwner, khOwner, nil)
 	if err != nil {
 		t.Fatalf("Couldn't read index value @ index: %v with error: %v", rndIndex, err)
 	}
